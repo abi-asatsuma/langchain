@@ -1,35 +1,41 @@
-import os
+from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.graph import StateGraph, MessagesState, START
 from langchain_ollama import ChatOllama
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.chat_history import InMemoryChatMessageHistory
-from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain_core.messages import SystemMessage
 
-llm = ChatOllama(model="llama3", temperature=0)
+# モデル初期化
+model = ChatOllama(model="llama3:8b", temperature=0)
 
-prompt = ChatPromptTemplate.from_messages([
-    ("system", "あなたは簡潔に答えるアシスタントです。"),
-    ("user", "{question}")
-])
+# チェックポインター（履歴保持用）
+checkpointer = InMemorySaver()
 
-chat_histories = {}
-def get_history(session_id: str):
-    return chat_histories.setdefault(session_id, InMemoryChatMessageHistory())
+# ノード定義
+def call_model(state: MessagesState):
+     # システムメッセージをモデル呼び出しの時だけ使用
+    system_msg = SystemMessage(content="日本語で、履歴を考慮して簡潔に答えてください。")
+    messages = [system_msg] + state["messages"]
+    
+    response = model.invoke(messages)
+    # 状態に返すのはAIメッセージだけ
+    return {"messages": [response]}
 
-runnable = prompt | llm
-chain = RunnableWithMessageHistory(
-    runnable,
-    get_history,
-    input_messages_key="question",
-    history_messages_key="chat_history",
+
+# グラフ構築
+builder = StateGraph(MessagesState)
+builder.add_node("call_model", call_model)
+builder.add_edge(START, "call_model")
+
+app = builder.compile(checkpointer=checkpointer)
+
+# 1回目の呼び出し
+result = app.invoke(
+    {"messages": [{"role": "user", "content": "わたしの名前は新卒太郎です。"}]},
+    {"configurable": {"thread_id": "1"}}
 )
-if __name__ == "__main__":
-    result = chain.invoke(
-        {"question": "LangChainって何ですか？"},
-        config={"configurable": {"session_id": "default"}},
-    )
-    print(result.content)
-    result2 = chain.invoke(
-        {"question": "もう少し詳しく教えてください。"},
-        config={"configurable": {"session_id": "default"}},
-    )
-    print(result2.content)
+
+# 2回目の呼び出し
+result = app.invoke(
+    {"messages": [{"role": "user", "content": "わたしの名前は何ですか？"}]},
+    {"configurable": {"thread_id": "1"}}
+)
+print([(msg.type, msg.content) for msg in result["messages"]])
