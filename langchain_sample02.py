@@ -32,6 +32,7 @@ result = app.invoke(
     {"messages": [{"role": "user", "content": "わたしの名前は新卒太郎です。"}]},
     {"configurable": {"thread_id": "1"}}
 )
+print([(msg.type, msg.content) for msg in result["messages"]])
 
 # 2回目の呼び出し
 result = app.invoke(
