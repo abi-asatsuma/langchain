@@ -43,15 +43,14 @@ def get_weather(city: str) -> str:
 tools = [get_weather]
 
 # モデル
-model = ChatOllama(model="llama3.1", temperature=0)
+model = ChatOllama(model="gpt-oss:20b", temperature=0)
 model_with_tools = model.bind_tools(tools)
 
 checkpointer = InMemorySaver()
 
 def agent_node(state: MessagesState):
     system_msg = SystemMessage(content="""日本語で簡潔に答えてください。
-天気・気温を調べるときは get_weather ツールを使い、その city 引数には
-「東京」「大阪」など都市名だけを入れてください。""")
+- 現在の天気・気温: get_weather ツールを使用してください。""")
     
     messages = [system_msg] + state["messages"]
     response = model_with_tools.invoke(messages)
@@ -87,10 +86,3 @@ result2 = app.invoke(
     {"configurable": {"thread_id": "1"}}
 )
 print("2回目:", result2["messages"][-1].content)
-
-print("\n=== 3回目: 明日の東京の天気 ===")
-result3 = app.invoke(
-    {"messages": [{"role": "user", "content": "明日の東京の気温は？"}]},
-    {"configurable": {"thread_id": "1"}}
-)
-print("3回目:", result3["messages"][-1].content[:100] + "...")
