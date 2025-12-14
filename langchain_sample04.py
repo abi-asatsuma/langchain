@@ -4,14 +4,43 @@ from langchain_ollama import ChatOllama
 from langchain_core.messages import SystemMessage
 from langgraph.prebuilt import ToolNode
 from langchain_core.tools import tool
+import requests
+import os
 
-# 正しいTavilyインポート（公式）
-from langchain_community.tools.tavily_search import TavilySearchResults
+@tool
+def get_weather(city: str) -> str:
+    """指定した都市の現在の天気と気温を取得します（OpenWeather API使用）。"""
+    api_key = os.getenv("OPENWEATHER_API_KEY")
+    if not api_key:
+      return "OPENWEATHER_API_KEY が設定されていません。"
+    
+    city_map = {
+        "東京": "Tokyo,JP",
+        "大阪": "Osaka,JP",
+        "名古屋": "Nagoya,JP",
+        "札幌": "Sapporo,JP",
+        "福岡": "Fukuoka,JP",
+    }
+    q = city_map.get(city, city)
 
-# 環境変数設定済みなら自動認識
-tavily_tool = TavilySearchResults(max_results=3)
+    url = "https://api.openweathermap.org/data/2.5/weather"
+    params = {
+        "q": q,
+        "appid": api_key,
+        "units": "metric",
+        "lang": "ja",
+    }
+    resp = requests.get(url, params=params, timeout=10)
+    if resp.status_code != 200:
+        return f"OpenWeather APIエラー: {resp.status_code} {resp.text[:200]}"
 
-tools = [tavily_tool]  # 公式ツール直使用（@tool不要）
+    data = resp.json()
+    temp = data["main"]["temp"]
+    desc = data["weather"][0]["description"]
+    humidity = data["main"]["humidity"]
+    return f"{city}の現在の天気: {desc}、気温: {temp}℃、湿度: {humidity}%"
+
+tools = [get_weather]
 
 # モデル
 model = ChatOllama(model="llama3.1", temperature=0)
@@ -21,7 +50,8 @@ checkpointer = InMemorySaver()
 
 def agent_node(state: MessagesState):
     system_msg = SystemMessage(content="""日本語で簡潔に答えてください。
-リアルタイム情報（天気・ニュース）はtavily_searchツールを必ず使用してください。""")
+天気・気温を調べるときは get_weather ツールを使い、その city 引数には
+「東京」「大阪」など都市名だけを入れてください。""")
     
     messages = [system_msg] + state["messages"]
     response = model_with_tools.invoke(messages)
@@ -58,7 +88,7 @@ result2 = app.invoke(
 )
 print("2回目:", result2["messages"][-1].content)
 
-print("\n=== 3回目: 明日の東京の気温は？ ===")
+print("\n=== 3回目: 明日の東京の天気 ===")
 result3 = app.invoke(
     {"messages": [{"role": "user", "content": "明日の東京の気温は？"}]},
     {"configurable": {"thread_id": "1"}}

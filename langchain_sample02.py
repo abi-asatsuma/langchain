@@ -4,7 +4,7 @@ from langchain_ollama import ChatOllama
 from langchain_core.messages import SystemMessage
 
 # モデル初期化
-model = ChatOllama(model="llama3:8b", temperature=0)
+model = ChatOllama(model="llama3.1", temperature=0)
 
 # チェックポインター（履歴保持用）
 checkpointer = InMemorySaver()
