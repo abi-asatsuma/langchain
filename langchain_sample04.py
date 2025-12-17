@@ -73,16 +73,16 @@ builder.add_edge("tools", "agent")
 app = builder.compile(checkpointer=checkpointer)
 
 # デモ
-print("=== 1回目: 天気検索 ===")
-result1 = app.invoke(
-    {"messages": [{"role": "user", "content": "今日の東京の気温は？"}]},
-    {"configurable": {"thread_id": "1"}}
-)
-print("1回目:", result1["messages"][-1].content[:100] + "...")
+# print("=== 1回目: 天気検索 ===")
+# result1 = app.invoke(
+#     {"messages": [{"role": "user", "content": "今日の東京の気温は？"}]},
+#     {"configurable": {"thread_id": "1"}}
+# )
+# print("1回目:", result1["messages"][-1].content[:100] + "...")
 
-print("\n=== 2回目: コーディネート ===")
-result2 = app.invoke(
-    {"messages": [{"role": "user", "content": "今日はどんな服装したらいい？"}]},
-    {"configurable": {"thread_id": "1"}}
-)
-print("2回目:", result2["messages"][-1].content)
+# print("\n=== 2回目: コーディネート ===")
+# result2 = app.invoke(
+#     {"messages": [{"role": "user", "content": "今日はどんな服装したらいい？"}]},
+#     {"configurable": {"thread_id": "1"}}
+# )
+# print("2回目:", result2["messages"][-1].content)
