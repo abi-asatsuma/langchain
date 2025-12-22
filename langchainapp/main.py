@@ -11,6 +11,6 @@ class Query(BaseModel):
 def chat(query: Query):
     result = app.invoke(
         {"messages": [{"role": "user", "content": query.message}]},
-        {"configurable": {"thread_id": "api-session"}}
+        {"configurable": {"thread_id": "session1"}}
     )
     return {"response": result["messages"][-1].content}
