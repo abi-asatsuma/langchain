@@ -43,7 +43,7 @@ def get_weather(city: str) -> str:
 tools = [get_weather]
 
 # モデル
-model = ChatOllama(model="gpt-oss:20b", temperature=0)
+model = ChatOllama(model="ministral-3:3b", temperature=0)
 model_with_tools = model.bind_tools(tools)
 
 checkpointer = InMemorySaver()

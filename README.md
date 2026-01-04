@@ -18,13 +18,16 @@ LangChainとOllamaを使った、最小限のLLMチェーンサンプルです�
    python langchain_sample01.py
    ```
 ## main起動
-Ollamaサーバーを起動
-1. Python仮想環境の準備・依存パッケージのインストール
+1. Ollamaサーバーを起動
+```
+ollama serve
+```
+2. Python仮想環境の準備・依存パッケージのインストール
  - 仮想環境を有効化
  ```
  source .venv/bin/activate
  ```
-2. FastAPIサーバーの起動
+3. FastAPIサーバーの起動
 プロジェクトルートで
 ```
 uvicorn langchainapp.main:api --reload

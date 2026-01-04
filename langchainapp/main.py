@@ -24,9 +24,8 @@ def call_langchain_api(message: str, max_retries: int = 3, delay: float = 1.0):
 
 @api.post("/chat")
 def chat(query: Query):
-    responses = []
-    for line in query.message.splitlines():
-        if line.strip():
-            response = call_langchain_api(line)
-            responses.append(response)
-    return {"responses": responses}
+    result = app.invoke(
+        {"messages": [{"role": "user", "content": query.message}]},
+        {"configurable": {"thread_id": "session1"}}
+    )
+    return {"response": result["messages"][-1].content}
